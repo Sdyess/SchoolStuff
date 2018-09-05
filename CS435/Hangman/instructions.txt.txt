@@ -1,0 +1,2 @@
+The server will auto bind itself to port 4040, so if you run the server as localhost, just enter 127.0.0.1:4040 in the client to connect to it
+

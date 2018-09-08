@@ -1,13 +1,19 @@
 #pragma once
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 #include <regex>
 #include <cctype>
+#include <sstream>
+#include <iomanip>
+#include <array>
+#include <optional>
+#include <functional>
+
 
 typedef std::vector<std::string> tokenContainer;
-typedef std::map<std::string, float> variableContainer;
+typedef std::unordered_map<std::string, std::optional<float>> variableContainer;
 
 class Interpreter
 {
@@ -21,10 +27,14 @@ public:
 		STMT_COMMAND
 	};
 
+	
+	const std::array<std::string, 5> keywords = { "load", "mem", "print", "stop", "sqrt" };
+	const std::array<std::string, 5> operators = { "+", "-", "*", "/", "^" };
+
 	variableContainer varMap;
 	tokenContainer tokenVec;
 	
-	const std::map<std::string, Commands> CommandMap{
+	const std::unordered_map<std::string, Commands> CommandMap{
 		{"load", LOAD_COMMAND},
 		{"mem", MEM_COMMAND},
 		{"print", PRINT_COMMAND},
@@ -32,6 +42,7 @@ public:
 	};
 
 	Interpreter();
+	~Interpreter();
 
 	tokenContainer TokenizeInput(std::string);
 	void HandlePrint();
@@ -41,13 +52,14 @@ public:
 	void HandleLoad();
 	void HandleCommand(int);
 	Commands ParseCommand();
+	std::optional<float> CreateVariable(float* = nullptr);
 
-	static inline std::string &ltrim(std::string &s) {
+	std::string &ltrim(std::string &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c); }));
 		return s;
 	}
 
-	static inline std::string &rtrim(std::string &s) {
+	std::string &rtrim(std::string &s) {
 		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {return !std::isspace(ch); }).base(), s.end());
 		return s;
 	}
@@ -55,6 +67,12 @@ public:
 	std::string toUpper(std::string s)
 	{
 		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); });
+		return s;
+	}
+
+	std::string toLower(std::string s)
+	{
+		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c);  });
 		return s;
 	}
 	

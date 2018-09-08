@@ -7,6 +7,7 @@ int main()
 	std::cout << ">READY FOR INPUT\n";
 	while (true)
 	{
+		
 		std::cout << ">";
 
 		std::string input;

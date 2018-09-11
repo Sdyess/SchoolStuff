@@ -18,41 +18,59 @@ typedef std::unordered_map<std::string, std::optional<float>> variableContainer;
 class Interpreter
 {
 public:
-	enum Commands
+	enum Keywords
 	{
-		LOAD_COMMAND,
-		MEM_COMMAND,
-		PRINT_COMMAND,
-		STOP_COMMAND,
-		STMT_COMMAND
+		LOAD,
+		MEM,
+		PRINT,
+		STOP,
+		STMT,
+		SQRT
 	};
 
-	
-	const std::array<std::string, 5> keywords = { "load", "mem", "print", "stop", "sqrt" };
-	const std::array<std::string, 5> operators = { "+", "-", "*", "/", "^" };
+	enum Operators
+	{
+		ADD,
+		SUB,
+		MULT,
+		DIV,
+		PWR,
+		EQL
+	};
 
 	variableContainer varMap;
 	tokenContainer tokenVec;
 	
-	const std::unordered_map<std::string, Commands> CommandMap{
-		{"load", LOAD_COMMAND},
-		{"mem", MEM_COMMAND},
-		{"print", PRINT_COMMAND},
-		{"stop", STOP_COMMAND}
+	const std::unordered_map<std::string, Keywords> KeywordMap{
+		{"load", LOAD},
+		{"mem", MEM},
+		{"print", PRINT},
+		{"stop", STOP},
+		{"sqrt", SQRT}
+	};
+
+	const std::unordered_map<char, Operators> OperatorMap{
+		{'+', ADD},
+		{'-', SUB},
+		{'*', MULT},
+		{'/', DIV},
+		{'^', PWR},
+		{'=', EQL}
 	};
 
 	Interpreter();
 	~Interpreter();
 
-	tokenContainer TokenizeInput(std::string);
+	void TokenizeInput(std::string);
 	void HandlePrint();
 	void HandleStop();
 	void HandleMem();
 	void HandleStatement();
 	void HandleLoad();
 	void HandleCommand(int);
-	Commands ParseCommand();
+	Keywords ParseCommand();
 	std::optional<float> CreateVariable(float* = nullptr);
+	bool OperatorExists(char);
 
 	std::string &ltrim(std::string &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c); }));

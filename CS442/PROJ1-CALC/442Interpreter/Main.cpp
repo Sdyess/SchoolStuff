@@ -12,7 +12,7 @@ int main()
 
 		std::string input;
 		std::getline(std::cin, input);
-		curInterpreter.tokenVec = curInterpreter.TokenizeInput(input);
+		curInterpreter.TokenizeInput(input);
 		curInterpreter.HandleCommand(curInterpreter.ParseCommand());
 	}
 	

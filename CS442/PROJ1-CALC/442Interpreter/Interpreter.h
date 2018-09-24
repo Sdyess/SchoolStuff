@@ -2,18 +2,22 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
-#include <vector>
+#include <stack>
 #include <regex>
 #include <cctype>
 #include <sstream>
 #include <iomanip>
 #include <array>
-#include <optional>
+#include <variant>
 #include <functional>
+#include <optional>
+#include <vector>
+#include <deque>
 
 
 typedef std::vector<std::string> tokenContainer;
 typedef std::unordered_map<std::string, std::optional<float>> variableContainer;
+
 
 class Interpreter
 {
@@ -39,7 +43,8 @@ public:
 	};
 
 	variableContainer varMap;
-	tokenContainer tokenVec;
+	std::deque<std::string> tokenQueue;
+	std::stack<std::string> tokenStack;
 	
 	const std::unordered_map<std::string, Keywords> KeywordMap{
 		{"load", LOAD},
@@ -64,13 +69,20 @@ public:
 	void TokenizeInput(std::string);
 	void HandlePrint();
 	void HandleStop();
+	float applyOp(float curVal, float appVal, char op);
 	void HandleMem();
 	void HandleStatement();
 	void HandleLoad();
 	void HandleCommand(int);
+	
 	Keywords ParseCommand();
+	
 	std::optional<float> CreateVariable(float* = nullptr);
+	
+	
 	bool OperatorExists(char);
+	bool KeywordExists(std::string);
+	bool VariableExists(std::string);
 
 	std::string &ltrim(std::string &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c); }));

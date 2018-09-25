@@ -42,6 +42,14 @@ public:
 		EQL
 	};
 
+	enum Errors
+	{
+		INVALID_SYNTAX,
+		UNDECL_VAR,
+		UNINIT_VAR,
+		EXIST_VAR
+	};
+
 	variableContainer varMap;
 	std::deque<std::string> tokenQueue;
 	std::stack<std::string> tokenStack;
@@ -83,6 +91,7 @@ public:
 	bool OperatorExists(char);
 	bool KeywordExists(std::string);
 	bool VariableExists(std::string);
+	void PrintErrorStatement(Errors, std::string = "UNKNOWN");
 
 	std::string &ltrim(std::string &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c); }));

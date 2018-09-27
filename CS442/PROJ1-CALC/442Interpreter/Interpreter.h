@@ -50,6 +50,15 @@ public:
 		EXIST_VAR
 	};
 
+	enum EvalActions
+	{
+		BEGIN,
+		VARIABLE,
+		KEYWORD,
+		OPERATOR,
+		VALUE
+	};
+
 	variableContainer varMap;
 	std::deque<std::string> tokenQueue;
 	std::stack<std::string> tokenStack;

@@ -39,7 +39,9 @@ public:
 		MULT,
 		DIV,
 		PWR,
-		EQL
+		EQL,
+		L_PAREN,
+		R_PAREN
 	};
 
 	enum Errors
@@ -63,6 +65,14 @@ public:
 	std::deque<std::string> tokenQueue;
 	std::stack<std::string> tokenStack;
 	
+	struct OpPrec {
+		OpPrec(Operators pOp, int pPrec) {
+			op = pOp; prec = pPrec;
+		}
+		Operators op;
+		int prec;
+	};
+
 	const std::unordered_map<std::string, Keywords> KeywordMap{
 		{"load", LOAD},
 		{"mem", MEM},
@@ -71,13 +81,15 @@ public:
 		{"sqrt", SQRT}
 	};
 
-	const std::unordered_map<char, Operators> OperatorMap{
-		{'+', ADD},
-		{'-', SUB},
-		{'*', MULT},
-		{'/', DIV},
-		{'^', PWR},
-		{'=', EQL}
+	const std::unordered_map<char, OpPrec> OperatorMap{
+		{'+', OpPrec(ADD, 1)},
+		{'-', OpPrec(SUB, 1)},
+		{'*', OpPrec(MULT, 2)},
+		{'/', OpPrec(DIV, 2)},
+		{'^', OpPrec(PWR, 3)},
+		{'=', OpPrec(EQL, 0)},
+		{'(', OpPrec(L_PAREN, 4)},
+		{')', OpPrec(R_PAREN, 4)}
 	};
 
 	Interpreter();
@@ -98,9 +110,11 @@ public:
 	
 	
 	bool OperatorExists(char);
+	int GetOperatorPrecedence(char);
 	bool KeywordExists(std::string);
 	bool VariableExists(std::string);
 	void PrintErrorStatement(Errors, std::string = "UNKNOWN");
+	bool IsValidVariableName(std::string);
 
 	std::string &ltrim(std::string &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c); }));

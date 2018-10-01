@@ -22,6 +22,25 @@ int Interpreter::GetOperatorPrecedence(char op)
 	return 0;
 }
 
+bool Interpreter::IsValidVariableName(std::string var)
+{
+	//rules for variable names
+	//cannot contain operators or be a reserved keyword
+	for (auto op : OperatorMap)
+	{
+		if (var.find(op.first) != std::string::npos)
+			return false;
+	}
+
+	for (auto keyword : KeywordMap)
+	{
+		if (keyword.first == var)
+			return false;
+	}
+
+	return true;
+}
+
 void Interpreter::HandleCommand(int command)
 {
 	switch (command)
@@ -94,18 +113,23 @@ void Interpreter::PrintErrorStatement(Errors error, std::string token)
 	}
 }
 
-void Interpreter::TokenizeInput(std::string input)
+void Interpreter::SanitizeInput(std::string& input)
 {
-	tokenQueue.clear();
-	std::string cleanInput = input;
-
 	//substr before comment
-	std::size_t comPos = cleanInput.find_first_of("//");
-	cleanInput = cleanInput.substr(0, comPos);
+	std::size_t comPos = input.find_first_of("//");
+	input = input.substr(0, comPos);
 
 	//trim whitespace
-	cleanInput = ltrim(cleanInput);
-	cleanInput = rtrim(cleanInput);
+	input = ltrim(input);
+	input = rtrim(input);
+}
+
+void Interpreter::TokenizeInput(std::string input)
+{
+	
+	tokenQueue.clear();
+	std::string cleanInput = input;
+	SanitizeInput(cleanInput);
 
 	std::regex reg("\\s+");
 
@@ -114,6 +138,7 @@ void Interpreter::TokenizeInput(std::string input)
 
 	std::vector<std::string> cleanVec(iter, end);
 
+	//this will change to use a lookahead for unary operators
 	for (auto token : cleanVec)
 	{
 		std::string curExpression = "";
@@ -138,7 +163,6 @@ void Interpreter::TokenizeInput(std::string input)
 	tokenStack = std::stack<std::string, std::deque<std::string>>(tokenQueue);
 
 }
-
 
 void Interpreter::HandleLoad()
 {

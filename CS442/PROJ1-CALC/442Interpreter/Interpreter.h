@@ -95,6 +95,7 @@ public:
 	Interpreter();
 	~Interpreter();
 
+	void SanitizeInput(std::string&);
 	void TokenizeInput(std::string);
 	void HandlePrint();
 	void HandleStop();

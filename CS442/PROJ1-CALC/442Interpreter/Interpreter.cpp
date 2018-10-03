@@ -85,8 +85,8 @@ bool Interpreter::KeywordExists(std::string keyword)
 
 bool Interpreter::VariableExists(std::string var)
 {
-	std::string newVar = toLower(tokenQueue.at(1));
-	auto itr = varMap.find(toLower(var));
+	std::string newVar = tokenQueue.at(1);
+	auto itr = varMap.find(var);
 
 	if (itr == varMap.end())
 		return false;
@@ -169,7 +169,7 @@ void Interpreter::HandleLoad()
 	if (tokenQueue.size() <= 1)
 		return;
 
-	std::string newVar = toLower(tokenQueue.at(1));
+	std::string newVar = tokenQueue.at(1);
 	auto itr = varMap.find(newVar);
 
 	if (itr != varMap.end())
@@ -207,7 +207,7 @@ void Interpreter::HandleMem()
 	if (tokenQueue.size() <= 1)
 		return;
 
-	std::string newVar = toLower(tokenQueue.at(1));
+	std::string newVar = tokenQueue.at(1);
 	auto itr = varMap.find(newVar);
 
 	if (itr != varMap.end())
@@ -221,7 +221,7 @@ void Interpreter::HandleMem()
 
 void Interpreter::HandlePrint()
 {
-	std::string printVar = toLower(tokenQueue.at(1));
+	std::string printVar = tokenQueue.at(1);
 	auto itr = varMap.find(printVar);
 
 	if (itr == varMap.end()) 
@@ -348,9 +348,9 @@ void Interpreter::HandleStatement()
 		}
 		else if (VariableExists(top))
 		{
-			if (varMap[toLower(top)].has_value())
+			if (varMap[top].has_value())
 			{
-				resultStack.push(varMap[toLower(top)].value());
+				resultStack.push(varMap[top].value());
 				tokenStack.pop();
 			}
 				

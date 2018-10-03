@@ -6,7 +6,7 @@ Interpreter::~Interpreter() {}
 Interpreter::Keywords Interpreter::ParseCommand()
 {
 	int command = -1;
-	auto itr = KeywordMap.find(tokenQueue.at(tokenQueue.size() - 1));
+	auto itr = KeywordMap.find(tokenQueue.at(0));
 	if (itr != KeywordMap.end())
 		command = itr->second;
 	
@@ -148,19 +148,19 @@ void Interpreter::TokenizeInput(std::string input)
 			{
 				if (curExpression.length() > 0)
 				{
-					tokenQueue.push_front(curExpression);
+					tokenQueue.push_back(curExpression);
 					curExpression = "";
 				}
-				tokenQueue.push_front(std::string(1, c));
+				tokenQueue.push_back(std::string(1, c));
 			}
 			else
 				curExpression += c;
 		}
 		if (curExpression.length() > 0)
-			tokenQueue.push_front(curExpression);	
+			tokenQueue.push_back(curExpression);	
 	}
 
-	tokenStack = std::stack<std::string, std::deque<std::string>>(tokenQueue);
+	//tokenStack = std::stack<std::string, std::deque<std::string>>(tokenQueue);
 
 }
 
@@ -169,7 +169,7 @@ void Interpreter::HandleLoad()
 	if (tokenQueue.size() <= 1)
 		return;
 
-	std::string newVar = toLower(tokenQueue.at(tokenQueue.size() - 2));
+	std::string newVar = toLower(tokenQueue.at(1));
 	auto itr = varMap.find(newVar);
 
 	if (itr != varMap.end())
@@ -207,7 +207,7 @@ void Interpreter::HandleMem()
 	if (tokenQueue.size() <= 1)
 		return;
 
-	std::string newVar = toLower(tokenQueue.at(tokenQueue.size() - 2));
+	std::string newVar = toLower(tokenQueue.at(1));
 	auto itr = varMap.find(newVar);
 
 	if (itr != varMap.end())
@@ -221,7 +221,7 @@ void Interpreter::HandleMem()
 
 void Interpreter::HandlePrint()
 {
-	std::string printVar = toLower(tokenQueue.at(tokenQueue.size() - 2));
+	std::string printVar = toLower(tokenQueue.at(1));
 	auto itr = varMap.find(printVar);
 
 	if (itr == varMap.end()) 
@@ -272,157 +272,95 @@ float Interpreter::applyOp(float curVal, float appVal, char op)
 	}
 }
 
+void Interpreter::ConvertToPostfix()
+{
+	std::deque<std::string> postFix;
+	std::stack<std::string> opStack;
+
+	//take tokenQueue and apply conversion
+	for (auto token : tokenQueue)
+	{
+		if (OperatorMap.find(token[0]) != OperatorMap.end())
+		{
+			if (token[0] == '(')
+			{
+				opStack.push(token);
+			}
+			else if (token[0] == ')')
+			{
+				std::string top = opStack.top();
+				while (top != "(")
+				{
+					postFix.push_front(top);
+					opStack.pop();
+					top = opStack.top();
+				}
+				opStack.pop();
+			}
+			else
+			{
+				int OpPrec = GetOperatorPrecedence(token[0]);
+				while (!opStack.empty())
+				{
+					int tst = GetOperatorPrecedence(opStack.top().c_str()[0]);
+					if (OpPrec >= tst)
+					{
+						postFix.push_front(opStack.top());
+						opStack.pop();
+					}
+					
+				}
+				opStack.push(token);
+			}
+		}
+		else
+		{
+			postFix.push_front(token);
+		}
+	}
+	while (!opStack.empty())
+	{
+		postFix.push_front(opStack.top());
+		opStack.pop();
+	}
+
+	tokenStack = std::stack<std::string, std::deque<std::string>>(postFix);
+}
+
 void Interpreter::HandleStatement()
 {
-	try
+	// get variable and = first, then do this
+	ConvertToPostfix();
+	std::stack<float> resultStack;
+
+	while (!tokenStack.empty())
 	{
-		if (tokenQueue.size() < 1)
-			return;
-
-		//first token should always be a variable
-		auto itr = varMap.find(tokenQueue.at(tokenQueue.size() - 1));
-
-		//doesnt exist
-		if (itr == varMap.end()) {
-			PrintErrorStatement(UNDECL_VAR, toUpper(tokenQueue.at(tokenQueue.size() - 1)));
-			return;
-		}
-		std::string varName = tokenStack.top();
-		tokenStack.pop();
-		//next token should be =
-		if (tokenStack.top().compare("=") != 0)
+		std::string top = tokenStack.top();
+		if (OperatorExists(top[0]))
 		{
-			PrintErrorStatement(INVALID_SYNTAX);
-			return;
+			//pop operator
+			tokenStack.pop();
+			float val1 = resultStack.top();
+			resultStack.pop();
+			float val2 = resultStack.top();
+			resultStack.pop();
+			resultStack.push(applyOp(val1, val2, top[0]));
 		}
-		tokenStack.pop();
-		float newVal = nanf("");
-		char prevOp = '=';
-		//add enum for previous token type to prevent errors
-		EvalActions lastAction = OPERATOR;
-
-		const int stack_size = tokenStack.size();
-		for (int i = 0; i < stack_size; i++)
+		else if (VariableExists(top))
 		{
-			if (tokenStack.size() == 0)
+			if (varMap[toLower(top)].has_value())
 			{
-				itr->second = newVal;
-				return;
+				resultStack.push(varMap[toLower(top)].value());
+				tokenStack.pop();
 			}
 				
-			//check if it is a variable, keyword, or operator
-			std::string curPiece = tokenStack.top();
-			bool isKeyword = KeywordExists(curPiece);
-			bool isOp = OperatorExists(curPiece[0]);
-			bool isVar = VariableExists(curPiece);
-
-			if (isOp)
-			{
-				if (lastAction != VARIABLE && lastAction != VALUE)
-				{
-					PrintErrorStatement(INVALID_SYNTAX, curPiece);
-					return;
-				}
-
-				prevOp = curPiece[0];
-				tokenStack.pop();
-				lastAction = OPERATOR;
-				continue;
-			}
-			
-			if (isVar)
-			{
-				//take var value and apply to newVal with prevOp
-				if (lastAction != OPERATOR)
-				{
-					PrintErrorStatement(INVALID_SYNTAX, curPiece);
-					return;
-				}
-
-				float varVal;
-				if (varMap[toLower(curPiece)].has_value())
-					varVal = varMap[toLower(curPiece)].value();
-				else
-				{
-					PrintErrorStatement(INVALID_SYNTAX, curPiece);
-					return;
-				}
-				newVal = applyOp(newVal, varVal, prevOp);
-				tokenStack.pop();
-				lastAction = VARIABLE;
-			}
-			
-			if (isKeyword)
-			{
-				if (toLower(curPiece).compare("sqrt") != 0)
-				{
-					PrintErrorStatement(INVALID_SYNTAX, curPiece);
-					return;
-				}
-				tokenStack.pop();
-				std::string next = tokenStack.top();
-				if (OperatorExists(next[0]))
-				{
-					PrintErrorStatement(INVALID_SYNTAX, next);
-					return;
-				}
-				if (VariableExists(toLower(next)))
-				{
-					float varVal;
-					if (varMap[toLower(next)].has_value())
-					{
-						varVal = varMap[toLower(next)].value();
-						if (newVal == newVal)
-							newVal = newVal + sqrtf(varVal);
-						else
-							newVal = sqrtf(varVal);
-						
-						tokenStack.pop();
-						lastAction = VARIABLE;
-						continue;
-					}			
-					else
-					{
-						PrintErrorStatement(INVALID_SYNTAX, next);;
-						return;
-					}		
-				}
-				else
-				{
-					newVal = sqrt(std::stof(next));
-					lastAction = VALUE;
-					tokenStack.pop();
-				}
-			}
-			//if all 3 false, we check if it is a number instead
-			if (!isKeyword && !isOp && !isVar)
-			{
-				if (lastAction != OPERATOR)
-				{
-					PrintErrorStatement(INVALID_SYNTAX, curPiece);
-					return;
-				}
-
-				try
-				{
-					if(isnan(newVal))
-						newVal = applyOp(0, std::stof(curPiece), prevOp);
-					else
-						newVal = applyOp(newVal, std::stof(curPiece), prevOp);
-				}
-				catch (const std::out_of_range& oor)
-				{
-					PrintErrorStatement(INVALID_SYNTAX);
-				}
-				tokenStack.pop();
-				lastAction = VALUE;
-			}
 		}
-		itr->second = newVal;
+		else
+		{
+			resultStack.push(std::stof(top));
+			tokenStack.pop();
+		}
 	}
-	catch (const std::out_of_range& oor)
-	{
-		PrintErrorStatement(INVALID_SYNTAX);
-	}
+	float x = resultStack.top();
 }
 

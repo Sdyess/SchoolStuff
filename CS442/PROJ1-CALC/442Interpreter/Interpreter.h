@@ -63,7 +63,7 @@ public:
 
 	variableContainer varMap;
 	std::deque<std::string> tokenQueue;
-	std::stack<std::string> tokenStack;
+	std::stack<std::string, std::deque<std::string>> tokenStack;
 	
 	struct OpPrec {
 		OpPrec(Operators pOp, int pPrec) {
@@ -116,6 +116,7 @@ public:
 	bool VariableExists(std::string);
 	void PrintErrorStatement(Errors, std::string = "UNKNOWN");
 	bool IsValidVariableName(std::string);
+	void ConvertToPostfix();
 
 	std::string &ltrim(std::string &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c); }));

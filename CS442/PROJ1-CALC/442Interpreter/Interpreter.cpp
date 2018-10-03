@@ -308,6 +308,10 @@ void Interpreter::ConvertToPostfix()
 						postFix.push_front(opStack.top());
 						opStack.pop();
 					}
+					else
+					{
+						break;
+					}
 					
 				}
 				opStack.push(token);
@@ -330,6 +334,20 @@ void Interpreter::ConvertToPostfix()
 void Interpreter::HandleStatement()
 {
 	// get variable and = first, then do this
+	std::string varName;
+	if (VariableExists(tokenQueue.at(0)))
+	{
+		varName = tokenQueue.at(0);
+		tokenQueue.pop_front();
+	}
+
+	char opCheck = tokenQueue.at(0).c_str()[0];
+	if (OperatorExists(opCheck))
+	{
+		if (opCheck == '=')
+			tokenQueue.pop_front();
+	}
+
 	ConvertToPostfix();
 	std::stack<float> resultStack;
 
@@ -344,7 +362,7 @@ void Interpreter::HandleStatement()
 			resultStack.pop();
 			float val2 = resultStack.top();
 			resultStack.pop();
-			resultStack.push(applyOp(val1, val2, top[0]));
+			resultStack.push(applyOp(val2, val1, top[0]));
 		}
 		else if (VariableExists(top))
 		{
@@ -352,8 +370,7 @@ void Interpreter::HandleStatement()
 			{
 				resultStack.push(varMap[top].value());
 				tokenStack.pop();
-			}
-				
+			}	
 		}
 		else
 		{
@@ -361,6 +378,6 @@ void Interpreter::HandleStatement()
 			tokenStack.pop();
 		}
 	}
-	float x = resultStack.top();
+	varMap[varName] = resultStack.top();
 }
 

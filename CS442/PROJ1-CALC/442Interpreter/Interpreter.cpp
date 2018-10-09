@@ -24,8 +24,6 @@ int Interpreter::GetOperatorPrecedence(char op)
 
 bool Interpreter::IsValidVariableName(std::string var)
 {
-	//rules for variable names
-	//cannot contain operators or be a reserved keyword
 	for (auto op : OperatorMap)
 	{
 		if (var.find(op.first) != std::string::npos)
@@ -138,9 +136,9 @@ void Interpreter::TokenizeInput(std::string input)
 
 	std::vector<std::string> cleanVec(iter, end);
 
-	//this will change to use a lookahead for unary operators
 	for (auto token : cleanVec)
 	{
+
 		std::string curExpression = "";
 		for (auto c : token)
 		{

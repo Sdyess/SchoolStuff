@@ -168,6 +168,12 @@ void Interpreter::HandleLoad()
 		return;
 
 	std::string newVar = tokenQueue.at(1);
+	if (!IsValidVariableName(newVar))
+	{
+		PrintErrorStatement(INVALID_SYNTAX, newVar);
+		return;
+	}
+
 	auto itr = varMap.find(newVar);
 
 	if (itr != varMap.end())
@@ -206,6 +212,12 @@ void Interpreter::HandleMem()
 		return;
 
 	std::string newVar = tokenQueue.at(1);
+	if (!IsValidVariableName(newVar))
+	{
+		PrintErrorStatement(INVALID_SYNTAX, newVar);
+		return;
+	}
+
 	auto itr = varMap.find(newVar);
 
 	if (itr != varMap.end())
@@ -276,8 +288,10 @@ void Interpreter::ConvertToPostfix()
 	std::stack<std::string> opStack;
 
 	//take tokenQueue and apply conversion
-	for (auto token : tokenQueue)
+	for (int i = 0; i < tokenQueue.size(); i++)
 	{
+		std::string token = tokenQueue[i];
+
 		if (OperatorMap.find(token[0]) != OperatorMap.end())
 		{
 			if (token[0] == '(')
@@ -314,6 +328,28 @@ void Interpreter::ConvertToPostfix()
 				}
 				opStack.push(token);
 			}
+		}
+		else if (token == "sqrt")
+		{
+			int openParens = 0;
+
+			auto itr = tokenQueue.begin();
+			for (int k = 0; k <= i; k++)
+				itr++;
+
+			do
+			{
+				std::string curToken = *itr;
+				if (curToken[0] == '(')
+					openParens++;
+				else if (curToken[0] == ')')
+					openParens--;
+				itr++;
+
+			} while (openParens > 0);
+
+			itr = tokenQueue.insert(itr, "^");
+			tokenQueue.insert(++itr, "0.5");
 		}
 		else
 		{
